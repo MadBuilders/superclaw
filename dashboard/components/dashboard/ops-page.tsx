@@ -498,7 +498,7 @@ function BareRepoRows({ repos }: { repos: NonNullable<ReposData["bareRepos"]> })
   );
 }
 
-export function OpsPage() {
+function RuntimeStatusPage({ scope }: { scope: "claw" | "ops" }) {
   const [data, setData] = useState<KanbanWorkerStatus | null>(null);
   const [accounts, setAccounts] = useState<AccountsData | null>(null);
   const [convex, setConvex] = useState<ConvexData | null>(null);
@@ -621,11 +621,12 @@ export function OpsPage() {
   const agentRepos = repoList.filter((repo) => repo.kind === "agent");
   const otherRepos = repoList.filter((repo) => repo.kind === "other");
   const visibleRepoCount = otherRepos.length + agentRepos.length + bareRepoList.length;
+  const isClaw = scope === "claw";
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">Ops</h1>
+        <h1 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">{isClaw ? "Claw" : "Ops"}</h1>
         <button
           onClick={() => void load("refresh")}
           disabled={loading || refreshing}
@@ -636,6 +637,7 @@ export function OpsPage() {
         </button>
       </div>
 
+      {isClaw ? (
       <div className="space-y-2">
         <SectionTitle title="Kanban" icon={Boxes} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -671,7 +673,9 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`Accounts (${accountProviders.length})`} icon={Shield} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -711,7 +715,9 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {!isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`Convex DBs (${convexDeployments.length})`} icon={Database} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -756,7 +762,9 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {!isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`Postgres DBs (${postgresDatabases.length})`} icon={Database} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -775,7 +783,9 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`Browser profiles (${browserProfileList.length})`} icon={Package} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -806,7 +816,9 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`ACP (${acp?.selectableAgents.length || 0})`} icon={Bot} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -827,7 +839,9 @@ export function OpsPage() {
           )}
         </div>
       </div>
+      ) : null}
 
+      {isClaw ? (
       <div className="space-y-2">
         <SectionTitle title={`MCP servers (${mcpServers.length})`} icon={PlugZap} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -858,7 +872,10 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      ) : null}
 
+      {!isClaw ? (
+      <>
       <div className="space-y-2">
         <SectionTitle title={`Cloudflare Routes (${cloudflared?.config.routes?.length || 0})`} icon={Cloud} />
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
@@ -1076,6 +1093,16 @@ export function OpsPage() {
           </div>
         </div>
       </div>
+      </>
+      ) : null}
     </div>
   );
+}
+
+export function ClawPage() {
+  return <RuntimeStatusPage scope="claw" />;
+}
+
+export function OpsPage() {
+  return <RuntimeStatusPage scope="ops" />;
 }

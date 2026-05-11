@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink } from "lucide-react";
 
 import { authFetch } from "@/components/dashboard/auth";
 
@@ -13,8 +12,68 @@ type AppBookmark = {
   icon?: string;
 };
 
+const CATEGORY_ORDER = ["Ops", "Apps"];
+
 function appFallbackIcon(app: AppBookmark) {
   return app.icon || app.name.trim().slice(0, 1).toUpperCase() || "•";
+}
+
+function compareCategories(left: string, right: string) {
+  const leftIndex = CATEGORY_ORDER.indexOf(left);
+  const rightIndex = CATEGORY_ORDER.indexOf(right);
+
+  if (leftIndex !== -1 || rightIndex !== -1) {
+    if (leftIndex === -1) return 1;
+    if (rightIndex === -1) return -1;
+    return leftIndex - rightIndex;
+  }
+
+  return left.localeCompare(right);
+}
+
+function AppIcon({ app }: { app: AppBookmark }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (app.image && !imageFailed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={app.image}
+        alt=""
+        className="h-12 w-12 object-contain transition-transform group-hover:scale-105 sm:h-14 sm:w-14"
+        aria-hidden="true"
+        onError={() => setImageFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-12 w-12 items-center justify-center text-2xl font-semibold leading-none text-zinc-700 transition-transform group-hover:scale-105 dark:text-zinc-200 sm:h-14 sm:w-14 sm:text-3xl">
+      {appFallbackIcon(app)}
+    </div>
+  );
+}
+
+function AppGrid({ apps }: { apps: AppBookmark[] }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
+      <div className="grid grid-cols-3 gap-x-6 gap-y-8 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        {apps.map((app) => (
+          <a
+            key={`${app.name}-${app.url}`}
+            href={app.url}
+            target="_blank"
+            rel="noreferrer"
+            title={app.url}
+            className="group flex min-w-0 flex-col items-center gap-2.5 rounded-2xl px-2 py-3 text-center transition-colors hover:bg-zinc-100/70 dark:hover:bg-zinc-800/60"
+          >
+            <AppIcon app={app} />
+            <div className="max-w-full truncate text-sm font-medium text-zinc-700 dark:text-zinc-300">{app.name}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function AppsPage() {
@@ -47,57 +106,29 @@ export function AppsPage() {
       const category = app.category.trim() || "Apps";
       grouped.set(category, [...(grouped.get(category) || []), app]);
     }
-    return Array.from(grouped.entries()).map(([category, categoryApps]) => ({ category, apps: categoryApps }));
+    return Array.from(grouped.entries())
+      .sort(([left], [right]) => compareCategories(left, right))
+      .map(([category, categoryApps]) => ({ category, apps: categoryApps }));
   }, [apps]);
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">Apps</h1>
-      </div>
-
+    <div className="space-y-6">
       {loading ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-500">
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-400 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:text-zinc-500 dark:shadow-none">
           Loading apps...
         </div>
       ) : apps.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:shadow-none">
           <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">No apps yet</div>
           <div className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Add local bookmarks in dashboard/apps.local.json.</div>
         </div>
       ) : (
-        <div className="space-y-8">
-          {categories.map(({ category, apps: categoryApps }) => (
-            <section key={category} className="space-y-3">
-              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">{category}</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {categoryApps.map((app) => (
-                  <a
-                    key={`${app.name}-${app.url}`}
-                    href={app.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100 text-xl font-semibold text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-                      {app.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={app.image} alt="" className="h-full w-full object-cover" aria-hidden="true" />
-                      ) : (
-                        appFallbackIcon(app)
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-200">{app.name}</div>
-                      <div className="truncate text-xs text-zinc-400 dark:text-zinc-500">{app.url}</div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
-                  </a>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        categories.map(({ category, apps: categoryApps }) => (
+          <section key={category}>
+            <h2 className="mb-3 text-lg font-semibold text-zinc-800 dark:text-zinc-200">{category}</h2>
+            <AppGrid apps={categoryApps} />
+          </section>
+        ))
       )}
     </div>
   );

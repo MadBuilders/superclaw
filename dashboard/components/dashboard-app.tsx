@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AppWindow, BarChart3, Gauge, Layers, LogOut, Moon, Puzzle, Server, Sun, Terminal, Users, Wifi, WifiOff } from "lucide-react";
+import { AppWindow, BarChart3, Bot, Gauge, Layers, LogOut, Moon, Puzzle, Server, Sun, Terminal, Users, Wifi, WifiOff } from "lucide-react";
 
 import { clearToken, getToken, setToken, authFetch } from "@/components/dashboard/auth";
 import { AgentsPage } from "@/components/dashboard/agents";
@@ -10,7 +10,7 @@ import { AppsPage } from "@/components/dashboard/apps-page";
 import { DebugPage, PerformancePage, UsagePage } from "@/components/dashboard/debug";
 import { LoginScreen } from "@/components/dashboard/login-screen";
 import { ModelsPage } from "@/components/dashboard/models-page";
-import { OpsPage } from "@/components/dashboard/ops-page";
+import { ClawPage, OpsPage } from "@/components/dashboard/ops-page";
 import { PendingOperationOverlay } from "@/components/dashboard/pending-operation-overlay";
 import { SkillsPage } from "@/components/dashboard/skills-page";
 import { type Agent, type Model, type Page, type ProviderSummary, type RestartOperationDescriptor, type RestartOperationState, type RunRestartOperation } from "@/components/dashboard/types";
@@ -21,6 +21,7 @@ const BASE_NAV_ITEMS: { id: Page; label: string; icon: typeof Users }[] = [
   { id: "agents", label: "Agents", icon: Users },
   { id: "models", label: "Models", icon: Layers },
   { id: "skills", label: "Skills", icon: Puzzle },
+  { id: "claw", label: "Claw", icon: Bot },
   { id: "ops", label: "Ops", icon: Server },
   { id: "performance", label: "Performance", icon: Gauge },
   { id: "usage", label: "Usage", icon: BarChart3 },
@@ -535,6 +536,7 @@ export default function App() {
           {loading ? <div className="text-center py-24 text-zinc-400 dark:text-zinc-500 text-sm">Connecting to gateway...</div> : (
             <>
               {page === "apps" && <AppsPage />}
+              {page === "claw" && <ClawPage />}
               {page === "agents" && <AgentsPage agents={agents} defaultPrimary={defaultModel.primary || "—"} runRestartOperation={runRestartOperation} onRefreshQuick={fetchAll} />}
               {page === "models" && <ModelsPage configuredProviders={configuredProviders} configuredModels={configuredModels} defaultModel={defaultModel} runRestartOperation={runRestartOperation} />}
               {page === "skills" && <SkillsPage />}

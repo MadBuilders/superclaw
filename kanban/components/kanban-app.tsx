@@ -1,6 +1,7 @@
 "use client";
 
 import { CollisionPriority } from "@dnd-kit/abstract";
+import { KeyboardSensor, PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { arrayMove, move } from "@dnd-kit/helpers";
 import {
   DragDropProvider,
@@ -12,7 +13,7 @@ import {
 } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { Archive, Chrome, Clock3, ExternalLink, Eye, EyeOff, GripVertical, Hash, Menu, Moon, Play, Search, Send, Sun, UserRound, Users, X } from "lucide-react";
+import { Archive, Chrome, Clock3, ExternalLink, Eye, EyeOff, Hash, Menu, Moon, Play, Search, Send, Sun, UserRound, Users, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -72,6 +73,7 @@ type AgentInboxCountModel = {
 };
 
 const DESCRIPTION_AUTOSAVE_DELAY_MS = 1200;
+const DRAG_ACTIVATION_DISTANCE_PX = 6;
 
 type CardModel = {
   _id: Id<"cards">;
@@ -254,7 +256,7 @@ function AgentAvatar({
   avatarUrl?: string | null;
   emoji?: string;
   fallbackIcon?: "user";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }) {
   const [loadedAvatar, setLoadedAvatar] = useState<{ url: string; src: string } | null>(null);
 
@@ -283,9 +285,11 @@ function AgentAvatar({
 
   const fallback = emoji?.trim() || agentName.trim().charAt(0).toUpperCase() || "?";
   const imageSrc = avatarUrl && loadedAvatar?.url === avatarUrl ? loadedAvatar.src : null;
-  const dimension = size === "sm" ? 24 : size === "lg" ? 40 : 32;
+  const dimension = size === "xs" ? 20 : size === "sm" ? 24 : size === "lg" ? 40 : 32;
   const sizeClass =
-    size === "sm"
+    size === "xs"
+      ? "h-5 w-5 text-[10px]"
+      : size === "sm"
       ? "h-6 w-6 text-[11px]"
       : size === "lg"
         ? "h-10 w-10 text-base"
@@ -304,7 +308,7 @@ function AgentAvatar({
     );
   }
 
-  const iconSizeClass = size === "sm" ? "h-3.5 w-3.5" : size === "lg" ? "h-5 w-5" : "h-4 w-4";
+  const iconSizeClass = size === "xs" ? "h-3 w-3" : size === "sm" ? "h-3.5 w-3.5" : size === "lg" ? "h-5 w-5" : "h-4 w-4";
 
   return (
     <div
@@ -1747,12 +1751,9 @@ export function KanbanApp({ onLogout }: { onLogout?: () => void }) {
                       <Archive className="h-3.5 w-3.5 shrink-0" />
                       <span>Archived</span>
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{hiddenBoards.length}</span>
-                      <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 transition-transform ${isArchivedBoardsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
-                    </span>
+                    <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 transition-transform ${isArchivedBoardsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
                   </button>
 
                   {isArchivedBoardsOpen ? (
@@ -2444,37 +2445,45 @@ function BoardSidebarItem({
   onHiddenChange: (hidden: boolean) => void;
   onDelete: () => void;
 }) {
+  const sortableSensors = useMemo(
+    () => [
+      PointerSensor.configure({
+        activationConstraints: () => [
+          new PointerActivationConstraints.Distance({
+            value: DRAG_ACTIVATION_DISTANCE_PX,
+          }),
+        ],
+        preventActivation: (event) =>
+          event.target instanceof Element && Boolean(event.target.closest("[data-board-actions]")),
+      }),
+      KeyboardSensor,
+    ],
+    [],
+  );
   const { ref: setNodeRef, handleRef } = useSortable({
     id: String(board._id),
     index,
     group,
     type: "board",
     accept: "board",
+    sensors: sortableSensors,
     disabled: !board.isOwner,
   });
+  const setBoardRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setNodeRef(element);
+      handleRef(element);
+    },
+    [handleRef, setNodeRef],
+  );
 
   return (
     <div
-      ref={setNodeRef}
-      className={`group w-full touch-pan-y select-none [-webkit-touch-callout:none] [-webkit-user-select:none] flex items-center gap-0 overflow-hidden rounded-lg transition-colors ${
+      ref={setBoardRef}
+      className={`group w-full touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none] flex items-center gap-0 overflow-hidden rounded-lg transition-colors ${
         isActive ? "bg-zinc-200 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
-      } ${isDragging ? "opacity-60" : ""}`}
+      } ${board.isOwner ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-60" : ""}`}
     >
-      {board.isOwner ? (
-        <button
-          type="button"
-          ref={handleRef}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-          }}
-          className="ml-0.5 inline-flex h-7 w-4 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-400"
-          aria-label={`Reorder ${board.name}`}
-          title="Drag to reorder"
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
-      ) : null}
       <a
         href={href}
         draggable={false}
@@ -2486,7 +2495,7 @@ function BoardSidebarItem({
           event.preventDefault();
           onSelect();
         }}
-        className={`min-w-0 flex-1 appearance-none border-0 bg-transparent rounded-none py-2 pl-1 pr-2.5 text-left text-sm font-medium transition-colors ${
+        className={`min-w-0 flex-1 appearance-none border-0 bg-transparent rounded-none py-2 pl-2.5 pr-2.5 text-left text-sm font-medium transition-colors ${
           isActive
             ? "text-zinc-900 dark:text-zinc-100"
             : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -2532,37 +2541,45 @@ function ArchivedBoardSidebarItem({
   onHiddenChange: (hidden: boolean) => void;
   onDelete: () => void;
 }) {
+  const sortableSensors = useMemo(
+    () => [
+      PointerSensor.configure({
+        activationConstraints: () => [
+          new PointerActivationConstraints.Distance({
+            value: DRAG_ACTIVATION_DISTANCE_PX,
+          }),
+        ],
+        preventActivation: (event) =>
+          event.target instanceof Element && Boolean(event.target.closest("[data-board-actions]")),
+      }),
+      KeyboardSensor,
+    ],
+    [],
+  );
   const { ref: setNodeRef, handleRef } = useSortable({
     id: String(board._id),
     index,
     group,
     type: "board",
     accept: "board",
+    sensors: sortableSensors,
     disabled: !board.isOwner,
   });
+  const setBoardRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setNodeRef(element);
+      handleRef(element);
+    },
+    [handleRef, setNodeRef],
+  );
 
   return (
     <div
-      ref={setNodeRef}
-      className={`group w-full touch-pan-y select-none [-webkit-touch-callout:none] [-webkit-user-select:none] flex items-center gap-0 overflow-hidden rounded-lg transition-colors ${
+      ref={setBoardRef}
+      className={`group w-full touch-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none] flex items-center gap-0 overflow-hidden rounded-lg transition-colors ${
         isActive ? "bg-zinc-200 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
-      } ${isDragging ? "opacity-60" : ""}`}
+      } ${board.isOwner ? "cursor-grab active:cursor-grabbing" : ""} ${isDragging ? "opacity-60" : ""}`}
     >
-      {board.isOwner ? (
-        <button
-          type="button"
-          ref={handleRef}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-          }}
-          className="ml-0.5 inline-flex h-7 w-4 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-zinc-300 transition hover:bg-zinc-100 hover:text-zinc-500 active:cursor-grabbing dark:text-zinc-600 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-400"
-          aria-label={`Reorder ${board.name}`}
-          title="Drag to reorder"
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
-      ) : null}
       <a
         href={href}
         draggable={false}
@@ -2574,7 +2591,7 @@ function ArchivedBoardSidebarItem({
           event.preventDefault();
           onSelect();
         }}
-        className={`min-w-0 flex-1 appearance-none border-0 bg-transparent rounded-none py-2 pl-1 pr-2.5 text-left text-sm font-medium transition-colors ${
+        className={`min-w-0 flex-1 appearance-none border-0 bg-transparent rounded-none py-2 pl-2.5 pr-2.5 text-left text-sm font-medium transition-colors ${
           isActive
             ? "text-zinc-900 dark:text-zinc-100"
             : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
@@ -2665,7 +2682,7 @@ function BoardActionsMenu({
   }
 
   return (
-    <div className="shrink-0 px-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+    <div data-board-actions className="shrink-0 px-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
       <button
         type="button"
         onPointerDown={(event) => event.stopPropagation()}
@@ -2910,6 +2927,19 @@ function KanbanCard({
     () => ({ type: "card" as const, columnId }),
     [columnId],
   );
+  const sortableSensors = useMemo(
+    () => [
+      PointerSensor.configure({
+        activationConstraints: () => [
+          new PointerActivationConstraints.Distance({
+            value: DRAG_ACTIVATION_DISTANCE_PX,
+          }),
+        ],
+      }),
+      KeyboardSensor,
+    ],
+    [],
+  );
   const { ref: setNodeRef, handleRef, isDragging } = useSortable({
     id: String(card._id),
     index,
@@ -2917,6 +2947,7 @@ function KanbanCard({
     type: "card",
     accept: "card",
     data: sortableData,
+    sensors: sortableSensors,
     disabled: !draggable,
   });
   const setCardRef = useCallback(
@@ -2982,7 +3013,7 @@ function KanbanCard({
           key: "source-extension",
           label: "Extension",
           title: "Created from extension",
-          icon: <Chrome className="h-4 w-4" aria-hidden="true" />,
+          icon: <Chrome className="h-3.5 w-3.5" aria-hidden="true" />,
           iconOnly: true,
           plainIcon: true,
           className: "text-indigo-600 dark:text-indigo-300",
@@ -3076,7 +3107,7 @@ function KanbanCard({
         title={activeSessionSummary || undefined}
         onClick={() => onOpenCard(card._id)}
         onContextMenu={handleContextMenu}
-          className={`group relative w-full touch-pan-y select-none [-webkit-touch-callout:none] [-webkit-user-select:none] ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} overflow-hidden rounded-xl border bg-white px-3 py-2 text-left transition duration-200 dark:bg-zinc-900 ${
+        className={`group relative w-full ${draggable ? "touch-none" : "touch-manipulation"} select-none [-webkit-touch-callout:none] [-webkit-user-select:none] ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} overflow-hidden rounded-xl border bg-white px-3 py-2 text-left transition duration-200 dark:bg-zinc-900 ${
           isActive
             ? "border-transparent shadow-[0_10px_26px_-22px_rgba(56,189,248,0.5)] hover:shadow-[0_12px_30px_-20px_rgba(56,189,248,0.7)]"
             : "border-zinc-200 hover:border-zinc-300 hover:shadow-sm dark:border-zinc-800 dark:hover:border-zinc-700"
@@ -3095,17 +3126,17 @@ function KanbanCard({
         </div>
         {summary ? <div className="mt-1 whitespace-pre-line break-words text-xs text-zinc-500 dark:text-zinc-400">{summary}</div> : null}
         {cardMetaTags.length > 0 || hasAssignee || hasReviewer ? (
-          <div className="mt-2 flex items-start justify-between gap-2">
+          <div className="mt-1.5 flex items-start justify-between gap-1.5">
             {cardMetaTags.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {cardMetaTags.map((tag) => (
                   <span
                     key={tag.key}
                     title={tag.title}
                     className={
                       tag.plainIcon
-                        ? `inline-flex h-6 w-6 items-center justify-center ${tag.className}`
-                        : `inline-flex h-6 items-center rounded-full border text-[10px] font-medium ${tag.iconOnly ? "w-6 justify-center px-0" : "px-2"} ${tag.className}`
+                        ? `inline-flex h-5 w-5 items-center justify-center ${tag.className}`
+                        : `inline-flex h-5 items-center rounded-full border text-[9px] font-medium leading-none ${tag.iconOnly ? "w-5 justify-center px-0" : "px-1.5"} ${tag.className}`
                     }
                   >
                     {tag.icon ? (
@@ -3121,17 +3152,17 @@ function KanbanCard({
               </div>
             ) : null}
             {hasAssignee || hasReviewer ? (
-              <div className="ml-auto flex shrink-0 items-center gap-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <div className="ml-auto flex shrink-0 items-center gap-1.5 text-[9px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 {hasAssignee ? (
                   <div className="inline-flex items-center" title={`Assignee: ${assigneeName}`}>
                     <span className="sr-only">Assignee: {assigneeName}</span>
-                    <AgentAvatar agentName={assigneeName} avatarUrl={assigneeAvatarUrl} size="sm" />
+                    <AgentAvatar agentName={assigneeName} avatarUrl={assigneeAvatarUrl} size="xs" />
                   </div>
                 ) : null}
                 {hasReviewer ? (
                   <div className="inline-flex items-center" title={`Reviewer: ${reviewerName}`}>
                     <span className="sr-only">Reviewer: {reviewerName}</span>
-                    <AgentAvatar agentName={reviewerName} avatarUrl={reviewerAvatarUrl} size="sm" />
+                    <AgentAvatar agentName={reviewerName} avatarUrl={reviewerAvatarUrl} size="xs" />
                   </div>
                 ) : null}
               </div>
