@@ -4,7 +4,8 @@
     "url": "http://127.0.0.1:3000",
     "category": "Ops",
     "image": "/local-app-icons/grafana.svg",
-    "icon": "G"
+    "icon": "G",
+    "synced": true
   },
   {
     "name": "anto.codes",

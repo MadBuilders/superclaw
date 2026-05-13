@@ -58,12 +58,13 @@ Each app has these fields:
     "url": "http://127.0.0.1:3000",
     "category": "Ops",
     "image": "/local-app-icons/grafana.svg",
-    "icon": "G"
+    "icon": "G",
+    "synced": true
   }
 ]
 ```
 
-`name`, `url`, and `category` are required. `image` is optional and can point at an SVG or other image path. Put local bookmark icons in `public/local-app-icons/`; the folder contents are intentionally gitignored except for `.gitkeep`. `icon` is optional text fallback, such as an emoji or letter, used when `image` is omitted.
+`name`, `url`, and `category` are required. `image` is optional and can point at an SVG or other image path. Put local bookmark icons in `public/local-app-icons/`; the folder contents are intentionally gitignored except for `.gitkeep`. `icon` is optional text fallback, such as an emoji or letter, used when `image` is omitted. `synced` is an optional boolean; set it to `true` to show the synced badge on the app tile.
 
 ## Notes
 

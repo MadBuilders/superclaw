@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 import { authFetch } from "@/components/dashboard/auth";
 
@@ -10,6 +11,7 @@ type AppBookmark = {
   category: string;
   image?: string;
   icon?: string;
+  synced?: boolean;
 };
 
 const CATEGORY_ORDER = ["Ops", "Apps"];
@@ -67,7 +69,18 @@ function AppGrid({ apps }: { apps: AppBookmark[] }) {
             title={app.url}
             className="group flex min-w-0 flex-col items-center gap-2.5 rounded-2xl px-2 py-3 text-center transition-colors hover:bg-zinc-100/70 dark:hover:bg-zinc-800/60"
           >
-            <AppIcon app={app} />
+            <div className="relative">
+              <AppIcon app={app} />
+              {app.synced ? (
+                <div
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-emerald-300 bg-emerald-600 text-white shadow-sm shadow-emerald-900/15 dark:border-emerald-300/60 dark:bg-emerald-400 dark:text-emerald-950"
+                  title="Synced"
+                  aria-label="Synced"
+                >
+                  <RefreshCw size={13} strokeWidth={2.4} />
+                </div>
+              ) : null}
+            </div>
             <div className="max-w-full truncate text-sm font-medium text-zinc-700 dark:text-zinc-300">{app.name}</div>
           </a>
         ))}

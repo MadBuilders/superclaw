@@ -9,6 +9,7 @@ type DashboardAppBookmark = {
   category: string;
   image?: string;
   icon?: string;
+  synced?: boolean;
 };
 
 const APPS_FILE = path.join(process.cwd(), "apps.local.json");
@@ -33,6 +34,7 @@ function normalizeAppBookmark(value: unknown): DashboardAppBookmark | null {
     category: raw.category.trim(),
     image: optionalString(raw.image),
     icon: optionalString(raw.icon),
+    synced: raw.synced === true,
   };
 }
 
