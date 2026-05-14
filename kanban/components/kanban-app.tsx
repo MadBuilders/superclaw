@@ -209,17 +209,10 @@ async function getSkillsLoadError(response: Response | null) {
 type ChoiceOption = string | { value: string; label: string; title?: string };
 
 const cardTypeOptions: ChoiceOption[] = [
-  { value: "feature", label: "Feature" },
-  { value: "bug", label: "Bug" },
-  { value: "cosmetic", label: "Cosmetic" },
+  { value: "feature", label: "🧩", title: "Feature" },
+  { value: "bug", label: "🐞", title: "Bug" },
+  { value: "cosmetic", label: "🎨", title: "Cosmetic change" },
 ];
-
-function formatCardTypeLabel(type: string) {
-  if (type === "feature") return "Feature";
-  if (type === "bug") return "Bug";
-  if (type === "cosmetic") return "Cosmetic";
-  return type;
-}
 
 const inputClass =
   "w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[16px] text-zinc-900 outline-none placeholder:text-zinc-400 transition focus:ring-2 focus:ring-zinc-300 sm:text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:placeholder:text-zinc-600 dark:focus:ring-zinc-700";
@@ -3004,7 +2997,9 @@ function KanbanCard({
     card.type
       ? {
           key: `type-${card.type}`,
-          label: formatCardTypeLabel(card.type),
+          label: card.type === "feature" ? "🧩" : card.type === "bug" ? "🐞" : "🎨",
+          title:
+            card.type === "feature" ? "Feature" : card.type === "bug" ? "Bug" : "Cosmetic change",
           className:
             card.type === "feature"
               ? "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:border-fuchsia-900/70 dark:bg-fuchsia-950/40 dark:text-fuchsia-200"
