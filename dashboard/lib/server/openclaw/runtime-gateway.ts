@@ -116,8 +116,8 @@ class RuntimeGatewayClient {
       role: "operator",
       scopes: ["operator.admin"],
       caps: ["tool-events"],
-      minProtocol: 3,
-      maxProtocol: 3,
+      minProtocol: 4,
+      maxProtocol: 4,
       onHelloOk: () => {
         this.lastConnectError = null;
         this.connected = true;

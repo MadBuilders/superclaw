@@ -148,8 +148,8 @@ async function runOfficialClientProbe({ gatewayUrl, token, clientId, mode, scope
       role: "operator",
       scopes: scopes.length > 0 ? scopes : ["operator.admin"],
       caps,
-      minProtocol: 3,
-      maxProtocol: 3,
+      minProtocol: 4,
+      maxProtocol: 4,
       onHelloOk: async (hello) => {
         try {
           console.log(`connect ok ${formatElapsed(startedAt)} protocol=${hello?.protocol ?? "?"}`);
@@ -254,8 +254,8 @@ async function main() {
     }
 
     return request("connect", {
-      minProtocol: 3,
-      maxProtocol: 3,
+      minProtocol: 4,
+      maxProtocol: 4,
       client: {
         id: clientId,
         displayName: "Codex Gateway Probe",

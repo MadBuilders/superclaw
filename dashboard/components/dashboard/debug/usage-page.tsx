@@ -54,6 +54,10 @@ function formatCurrencyCompact(value: number) {
   return `$${value.toFixed(2)}`;
 }
 
+function formatLatencySeconds(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value / 1000).toFixed(1)}s` : "n/a";
+}
+
 function getAgentColor(index: number) {
   const colors = [
     "hsl(221 83% 53%)",
@@ -160,6 +164,7 @@ export function UsagePage() {
   const totalTokens = daily.reduce((s: number, d: any) => s + d.tokens, 0);
   const totalMessages = daily.reduce((s: number, d: any) => s + d.messages, 0);
   const totalToolCalls = daily.reduce((s: number, d: any) => s + d.toolCalls, 0);
+  const latency = data.aggregates.latency ?? {};
 
   return (
     <div className="space-y-6">
@@ -292,7 +297,7 @@ export function UsagePage() {
       <div className="bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/60 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">Tool Usage</h2>
         <div className="flex flex-wrap gap-2">
-          {(data.aggregates.tools.tools || []).map((t: any) => (
+          {(data.aggregates.tools?.tools || []).map((t: any) => (
             <span
               key={t.name}
               className="text-xs px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700/40 text-zinc-600 dark:text-zinc-400"
@@ -307,10 +312,10 @@ export function UsagePage() {
         <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3">Response Latency</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "Average", value: `${(data.aggregates.latency.avgMs / 1000).toFixed(1)}s` },
-            { label: "p95", value: `${(data.aggregates.latency.p95Ms / 1000).toFixed(1)}s` },
-            { label: "Min", value: `${(data.aggregates.latency.minMs / 1000).toFixed(1)}s` },
-            { label: "Max", value: `${(data.aggregates.latency.maxMs / 1000).toFixed(1)}s` },
+            { label: "Average", value: formatLatencySeconds(latency.avgMs) },
+            { label: "p95", value: formatLatencySeconds(latency.p95Ms) },
+            { label: "Min", value: formatLatencySeconds(latency.minMs) },
+            { label: "Max", value: formatLatencySeconds(latency.maxMs) },
           ].map((l) => (
             <div key={l.label} className="text-center">
               <div className="text-[11px] text-zinc-400 uppercase tracking-wider">{l.label}</div>
