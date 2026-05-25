@@ -121,6 +121,7 @@ Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%h
 ExecStart=/usr/bin/pnpm exec next dev --hostname 127.0.0.1 --port 19830
 Restart=always
 RestartSec=5
+TimeoutStopSec=5
 User=%u
 
 [Install]
@@ -134,6 +135,7 @@ EOF
 cd ~/.openclaw/workspace/apps/superclaw/kanban
 pnpm install
 cp .env.local.example .env.local
+pnpm build
 ```
 
 Required local env in `.env.local`:
@@ -202,7 +204,7 @@ Type=simple
 WorkingDirectory=%h/.openclaw/workspace/apps/superclaw/kanban
 Environment=HOME=%h
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:%h/.local/bin:%h/.local/share/pnpm
-ExecStart=/usr/bin/pnpm exec next dev --hostname 127.0.0.1 --port 19831
+ExecStart=/usr/bin/pnpm exec next start --hostname 127.0.0.1 --port 19831
 Restart=always
 RestartSec=5
 User=%u
@@ -213,7 +215,7 @@ EOF
 ```
 
 Kanban exposure modes:
-- **single-machine local dev:** keep `ExecStart ... --hostname 127.0.0.1 --port 19831`, keep tunnel ingress off, and keep `NEXT_PUBLIC_SITE_URL` / `SITE_URL` on the same local origin
+- **single-machine local access:** keep `ExecStart ... --hostname 127.0.0.1 --port 19831`, keep tunnel ingress off, and keep `NEXT_PUBLIC_SITE_URL` / `SITE_URL` on the same local origin
 - **private internal/Tailscale access:** bind Kanban to your internal IP instead of `127.0.0.1`, keep tunnel ingress off, and set both `NEXT_PUBLIC_SITE_URL` and `SITE_URL` to that internal origin
 - **shared/public mode:** add Cloudflare Tunnel ingress for the public hostname and set both `NEXT_PUBLIC_SITE_URL` and `SITE_URL` to that public URL so magic-link emails point to the right place
 

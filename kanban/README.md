@@ -32,6 +32,7 @@ Other commands:
 ```bash
 pnpm lint
 pnpm build
+pnpm start
 pnpm exec convex dev
 pnpm exec convex codegen
 ```
