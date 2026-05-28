@@ -14,7 +14,7 @@
     "@dnd-kit/dom": "^0.4.0",
     "@dnd-kit/helpers": "^0.4.0",
     "@dnd-kit/react": "^0.4.0",
-    "better-auth": "1.4.9",
+    "better-auth": "1.6.2",
     "convex": "^1.32.0",
     "json5": "^2.2.3",
     "lucide-react": "^0.577.0",
